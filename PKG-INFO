@@ -17,7 +17,7 @@ Classifier: Operating System :: OS Independent
 Requires-Python: >=3.8, <3.13
 Description-Content-Type: text/markdown
 Requires-Dist: cryptography
-Requires-Dist: git+https://github.com/ErRickow/pyrogram
+Requires-Dist: Kurigram
 Requires-Dist: tgcrypto
 Requires-Dist: gpytranslate
 Requires-Dist: google-generativeai
