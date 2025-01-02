@@ -1,8 +1,0 @@
-cryptography
-git+https://github.com/ErRickow/pyrogram
-tgcrypto
-gpytranslate
-google-generativeai
-gtts
-aiofiles
-aiohttp
