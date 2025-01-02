@@ -8,6 +8,18 @@ with open("ertools/__init__.py", encoding="utf-8") as f:
 with open("requirements.txt", encoding="utf-8") as r:
     requires = [i.strip() for i in r]
 
+def read_requirements():
+    try:
+        with open("requirements.txt") as f:
+            return f.read().splitlines()
+    except FileNotFoundError:
+        print("Warning: requirements.txt not found. No dependencies will be installed.")
+        return []
+
+
+def read(fname, version=version):
+    text = open(os.path.join(os.path.dirname(__file__), fname), encoding="utf8").read()
+    return text
 
 setup(
     name="ertools",
