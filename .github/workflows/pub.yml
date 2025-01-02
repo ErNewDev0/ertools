@@ -13,17 +13,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    # Checkout code dari repositori
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Setup Python environment
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
         python-version: '3.x'
+
+    # Cache pip dependencies
+    - name: Cache pip
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # Install dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build
+
+    # Debug - List files to check availability
+    - name: Debug - List files in working directory
+      run: ls -la
+
+    # Validate package structure
+    - name: Validate package structure
+      run: |
+        python -m build
+        pip install twine
+        twine check dist/*
+
+    # Build package
     - name: Build package
       run: python -m build
+
+    # Publish package to PyPI
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
