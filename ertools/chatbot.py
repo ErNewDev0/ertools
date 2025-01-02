@@ -9,7 +9,7 @@ import aiohttp
 import google.generativeai as genai
 from pyrogram.types import InputMediaPhoto
 
-from mytools.encrypt import BinaryEncryptor
+from ertools.encrypt import BinaryEncryptor
 
 code = BinaryEncryptor()
 
