@@ -1,61 +1,35 @@
-name: Uplouded
+name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
-
-permissions:
-  contents: read
+  workflow_dispatch:
 
 jobs:
-  deploy:
-
+  publish:
     runs-on: ubuntu-latest
+    environment: publish
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-    # Checkout code dari repositori
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
-    # Setup Python environment
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.12.*'
 
-    # Cache pip dependencies
-    - name: Cache pip
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    # Install dependencies
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
+      run: pip install build
 
-    # Debug - List files to check availability
-    - name: Debug - List files in working directory
-      run: ls -la
+    - name: Build the package
+      run: python3 -m build
 
-    # Validate package structure
-    - name: Validate package structure
-      run: |
-        python -m build
-        pip install twine
-        twine check dist/*
-
-    # Build package
-    - name: Build package
-      run: python -m build
-
-    # Publish package to PyPI
-    - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+        repository-url: https://upload.pypi.org/legacy/
