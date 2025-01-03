@@ -9,7 +9,7 @@ import google.generativeai as genai
 from pyrogram.types import InputMediaPhoto
 
 from .misc import Handler
-from .getuser
+from .getuser import Extract
 from .prompt import intruction
 
 chat_history = {}
