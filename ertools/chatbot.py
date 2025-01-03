@@ -8,7 +8,8 @@ import aiohttp
 import google.generativeai as genai
 from pyrogram.types import InputMediaPhoto
 
-from .misc import Handler, Extract
+from .misc import Handler
+from .getuser
 from .prompt import intruction
 
 chat_history = {}
