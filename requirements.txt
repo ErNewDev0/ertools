@@ -1,5 +1,5 @@
 cryptography
-git+https://github.com/ErRickow/pyrogram.git
+kurigram
 tgcrypto
 gpytranslate
 google-generativeai
