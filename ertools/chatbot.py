@@ -43,8 +43,7 @@ class Api:
         try:
             text = Handler().getMsg(message, is_chatbot=True)
             mention = Extract().getMention(message.from_user)
-            chat = message.chat.tilte
-            msg = f"gue {mention}, Tolong Jawabnya Panggil {mention} ye. gw di {chat}, {text}. {chat} adalah group telegram" if message.from_user.id not in chat_history else text
+            msg = f"gue {mention}, Tolong Jawabnya Panggil {mention} ye, {text}." if message.from_user.id not in chat_history else text
 
             model = self.configure_model("chatbot")
             history = chat_history.setdefault(message.from_user.id, [])
