@@ -1,5 +1,4 @@
 cryptography
-kurigram
 tgcrypto
 gpytranslate
 google-generativeai
