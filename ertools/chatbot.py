@@ -43,7 +43,8 @@ class Api:
         try:
             text = Handler().getMsg(message, is_chatbot=True)
             mention = Extract().getMention(message.from_user)
-            msg = f"gue {mention}, Tolong Jawabnya Panggil {mention} ye, {text}." if message.from_user.id not in chat_history else text
+            etmin = Extract().getAdmin(message)
+            msg = f"gue {mention} alias {etmin}, Tolong Jawabnya Panggil nama gw ye, yaitu {mention}. {text}." if message.from_user.id not in chat_history else text
 
             model = self.configure_model("chatbot")
             history = chat_history.setdefault(message.from_user.id, [])
