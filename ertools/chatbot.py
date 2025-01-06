@@ -2,6 +2,9 @@ import logging
 import os
 import random
 import string
+import re
+import requests
+from bs4 import BeautifulSoup
 
 import aiofiles
 import aiohttp
@@ -41,8 +44,29 @@ class Api:
 
     def chatbotnya(self, message):
         try:
-            text = Handler().getMsg(message, is_chatbot=True)
             mention = Extract().getMention(message.from_user)
+            url_pattern = re.compile(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+')
+            urls = url_pattern.findall(message.text)
+    
+            if urls:
+                url = urls[0]
+                response = requests.get(url, timeout=10)
+                if response.status_code != 200:
+                    return f"URL tidak dapat diakses {response.status_code})."
+    
+                soup = BeautifulSoup(response.content, 'html.parser')
+                title = soup.title.string if soup.title else "Tidak ada judul"
+                meta_description = soup.find('meta', attrs={'name': 'description'})
+                description = meta_description['content'] if meta_description else "Tidak ada deskripsi"
+    
+                url_response = (
+                    f"URL yang dikirim oleh {mention}:\n"
+                    f"**Judul**: {title}\n"
+                    f"**Deskripsi**: {description}\n"
+                    f"**Link**: {url}"
+                )
+                return url_response
+            text = Handler().getMsg(message, is_chatbot=True)
             etmin = Extract().getAdmin(message)
             msg = f"gue {mention} alias {etmin}, Tolong Jawabnya Panggil nama gw ye, yaitu {mention}. {text}." if message.from_user.id not in chat_history else text
 
