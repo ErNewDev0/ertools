@@ -1,18 +1,18 @@
 import logging
 import os
 import random
-import re
 import string
+import re
+import requests
+from bs4 import BeautifulSoup
 
 import aiofiles
 import aiohttp
 import google.generativeai as genai
-import requests
-from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
 
-from .getuser import Extract
 from .misc import Handler
+from .getuser import Extract
 from .prompt import intruction
 
 chat_history = {}
@@ -23,16 +23,12 @@ class Api:
         self.name = name
         self.dev = dev
         self.apikey = apikey
-        self.safety_rate = {
-            key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]
-        }
+        self.safety_rate = {key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]}
 
     def configure_model(self, mode):
         genai.configure(api_key=self.apikey)
         instruction = intruction[mode].format(name=self.name, dev=self.dev)
-        return genai.GenerativeModel(
-            "models/gemini-1.5-flash", system_instruction=instruction
-        )
+        return genai.GenerativeModel("models/gemini-1.5-flash", system_instruction=instruction)
 
     def _log(self, record):
         return logging.getLogger(record)
@@ -49,24 +45,20 @@ class Api:
     def chatbotnya(self, message):
         try:
             mention = Extract().getMention(message.from_user)
-            url_pattern = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
+            url_pattern = re.compile(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+')
             urls = url_pattern.findall(message.text)
-
+    
             if urls:
                 url = urls[0]
                 response = requests.get(url, timeout=10)
                 if response.status_code != 200:
                     return f"URL tidak dapat diakses {response.status_code})."
-
-                soup = BeautifulSoup(response.content, "html.parser")
+    
+                soup = BeautifulSoup(response.content, 'html.parser')
                 title = soup.title.string if soup.title else "Tidak ada judul"
-                meta_description = soup.find("meta", attrs={"name": "description"})
-                description = (
-                    meta_description["content"]
-                    if meta_description
-                    else "Tidak ada deskripsi"
-                )
-
+                meta_description = soup.find('meta', attrs={'name': 'description'})
+                description = meta_description['content'] if meta_description else "Tidak ada deskripsi"
+    
                 url_response = (
                     f"URL yang dikirim oleh {mention}:\n"
                     f"**Judul**: {title}\n"
@@ -76,20 +68,14 @@ class Api:
                 return url_response
             text = Handler().getMsg(message, is_chatbot=True)
             etmin = Extract().getAdmin(message)
-            msg = (
-                f"gue {mention}, Tolong Jawabnya Panggil nama gw ye, yaitu {mention}. {text}."
-                if message.from_user.id not in chat_history
-                else text
-            )
+            msg = f"gue {mention}, Tolong Jawabnya Panggil nama gw, yaitu {mention}. {text}." if message.from_user.id not in chat_history else text
 
             model = self.configure_model("chatbot")
             history = chat_history.setdefault(message.from_user.id, [])
             history.append({"role": "user", "parts": msg})
 
             chat_session = model.start_chat(history=history)
-            response = chat_session.send_message(
-                {"role": "user", "parts": msg}, safety_settings=self.safety_rate
-            )
+            response = chat_session.send_message({"role": "user", "parts": msg}, safety_settings=self.safety_rate)
             history.append({"role": "model", "parts": response.text})
 
             return response.text
@@ -105,9 +91,7 @@ class Api:
 
 
 class ImageGen:
-    def __init__(
-        self, url: str = "https://mirai-api.netlify.app/api/image-generator/bing-ai"
-    ):
+    def __init__(self, url: str = "https://mirai-api.netlify.app/api/image-generator/bing-ai"):
         self.url = url
 
     def _log(self, record):
@@ -118,29 +102,21 @@ class ImageGen:
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, json=payload) as response:
                 if response.status != 200:
-                    raise Exception(
-                        f"Error: Request failed with status {response.status}"
-                    )
+                    raise Exception(f"Error: Request failed with status {response.status}")
 
                 try:
                     data = await response.json()
                 except aiohttp.ContentTypeError:
-                    raise Exception(
-                        f"Error: Failed to decode JSON response. Raw response: {await response.text()}"
-                    )
+                    raise Exception(f"Error: Failed to decode JSON response. Raw response: {await response.text()}")
 
                 if "url" in data:
                     imageList = []
                     for num, image_url in enumerate(data["url"], 1):
-                        random_name = "".join(
-                            random.choices(string.ascii_lowercase + string.digits, k=8)
-                        )
+                        random_name = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
                         filename = f"{random_name}_{num}.jpg"
                         async with session.get(image_url) as image_response:
                             if image_response.status != 200:
-                                raise Exception(
-                                    f"Error: Failed to download image with status {image_response.status}"
-                                )
+                                raise Exception(f"Error: Failed to download image with status {image_response.status}")
 
                             async with aiofiles.open(filename, "wb") as file:
                                 content = await image_response.read()
