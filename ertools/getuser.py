@@ -29,7 +29,11 @@ class Extract:
             reply = message.reply_to_message
             if reply.from_user:
                 user_id = reply.from_user.id
-            elif sender_chat and reply.sender_chat and reply.sender_chat.id != message.chat.id:
+            elif (
+                sender_chat
+                and reply.sender_chat
+                and reply.sender_chat.id != message.chat.id
+            ):
                 user_id = reply.sender_chat.id
             else:
                 return None, None
@@ -48,13 +52,20 @@ class Extract:
         return None, None
 
     async def getAdmin(self, message):
-        member = await message._client.get_chat_member(message.chat.id, message.from_user.id)
-        return member.status in (enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER)
+        member = await message._client.get_chat_member(
+            message.chat.id, message.from_user.id
+        )
+        return member.status in (
+            enums.ChatMemberStatus.ADMINISTRATOR,
+            enums.ChatMemberStatus.OWNER,
+        )
 
     async def getId(self, message):
         return (await self.getRid(message))[0]
 
     def getMention(self, user):
-        name = f"{user.first_name} {user.last_name}" if user.last_name else user.first_name
+        name = (
+            f"{user.first_name} {user.last_name}" if user.last_name else user.first_name
+        )
         link = f"tg://user?id={user.id}"
         return f"[{name}]({link})"

@@ -12,7 +12,11 @@ class Button:
 
     def extractButtonsAndText(self, text):
         button_data = re.findall(r"\| ([^|]+) - ([^|]+) \|", text)
-        extracted_text = re.split(r"\| [^|]+ - [^|]+ \|", text)[0].strip() if "|" in text else text.strip()
+        extracted_text = (
+            re.split(r"\| [^|]+ - [^|]+ \|", text)[0].strip()
+            if "|" in text
+            else text.strip()
+        )
         return button_data, extracted_text
 
     def buildDynamicInlineKeyboard(self, text, inline_cmd=None, is_id=None):
@@ -23,7 +27,11 @@ class Button:
             cb_data, *extra_params = button_payload.split(";")
 
             if not self.fetchUrls(cb_data):
-                cb_data = f"{inline_cmd} {is_id}_{cb_data}" if inline_cmd and is_id else cb_data
+                cb_data = (
+                    f"{inline_cmd} {is_id}_{cb_data}"
+                    if inline_cmd and is_id
+                    else cb_data
+                )
 
             button = (
                 InlineKeyboardButton(button_label, user_id=cb_data)
@@ -44,7 +52,10 @@ class Button:
 
     def generateInlineButtonGrid(self, buttons, row_width=2):
         grid_layout = [
-            [InlineKeyboardButton(**button_data) for button_data in buttons[i : i + row_width]]
+            [
+                InlineKeyboardButton(**button_data)
+                for button_data in buttons[i : i + row_width]
+            ]
             for i in range(0, len(buttons), row_width)
         ]
         return InlineKeyboardMarkup(grid_layout)
