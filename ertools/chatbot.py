@@ -11,7 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
 
-from .getuser import Extract
+from .getuser import Extract, thisGroup
 from .misc import Handler
 from .prompt import intruction
 
@@ -78,7 +78,7 @@ class Api:
             gc = Extract().thisGroup(message)
             etmin = Extract().getAdmin(message)
             msg = (
-                f"gue {mention}, Tolong Jawabnya Panggil nama gw, yaitu {mention},{text}.\n\nini lu sedang di {gc}"
+                f"gue {mention}, Tolong Jawabnya Panggil nama gw, yaitu {mention},{text}"
                 if message.from_user.id not in chat_history
                 else text
             )
