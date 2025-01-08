@@ -11,7 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
 
-from .getuser import Extract
+from .getuser import Extract, thisGroup
 from .misc import Handler
 from .prompt import intruction
 
@@ -102,7 +102,7 @@ class Api:
         if chat_history.pop(message.from_user.id, None):
             mention = Extract().getMention(message.from_user)
             return f"Riwayat obrolan untuk {mention} telah dihapus."
-        return "Maaf, kita belum pernah ngobrol sebelumnya."
+        return "Maaf, kamu siapa"
 
 
 class ImageGen:
