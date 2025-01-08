@@ -2,10 +2,10 @@ from pyrogram import enums
 
 
 class Extract:
-  
+
     async def thisGroup(self, message):
         return message.chat.title
-        
+
     async def getUserId(self, message, username):
         entities = message.entities
 
