@@ -5,11 +5,14 @@ class Extract:
     async def isMentionAdmin(self, message, username):
         user_id = await self.getUserId(message, username)
         member = await message._client.get_chat_member(message.chat.id, user_id)
-        return member.status in (enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER)
-  
+        return member.status in (
+            enums.ChatMemberStatus.ADMINISTRATOR,
+            enums.ChatMemberStatus.OWNER,
+        )
+
     async def thisGroup(self, message):
         return message.chat.title
-        
+
     async def getUserId(self, message, username):
         entities = message.entities
 
