@@ -13,7 +13,7 @@ from pyrogram.types import InputMediaPhoto
 
 from .getuser import Extract
 from .misc import Handler
-from .prompt import instruction
+from .prompt import intruction
 
 chat_history = {}
 
@@ -29,7 +29,7 @@ class Api:
 
     def configure_model(self, mode):
         genai.configure(api_key=self.apikey)
-        instruction = instruction[mode].format(name=self.name, dev=self.dev)
+        instruction = intruction[mode].format(name=self.name, dev=self.dev)
         return genai.GenerativeModel(
             "models/gemini-1.5-flash", system_instruction=instruction
         )
