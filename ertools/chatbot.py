@@ -75,8 +75,6 @@ class Api:
                 )
                 return url_response
             text = Handler().getMsg(message, is_chatbot=True)
-            gc = Extract().thisGroup(message)
-            etmin = Extract().getAdmin(message)
             msg = (
                 f"gue {mention}, Tolong Jawabnya Panggil nama gw, yaitu {mention},{text}"
                 if message.from_user.id not in chat_history
