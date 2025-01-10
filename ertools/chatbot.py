@@ -13,7 +13,6 @@ from pyrogram.types import InputMediaPhoto
 
 from .getuser import Extract
 from .misc import Handler
-from .prompt import instruction
 
 chat_history = {}
 
