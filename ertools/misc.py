@@ -10,9 +10,23 @@ class Handler:
         return message.text.split(None, 1)[1] if len(message.command) > 1 else ""
 
     def getMsg(self, message, is_chatbot=False):
-        reply_text = message.reply_to_message.text or message.reply_to_message.caption if message.reply_to_message else ""
-        user_text = message.text if is_chatbot else (message.text.split(None, 1)[1] if len(message.text.split()) >= 2 else "")
-        return f"{user_text}\n\n{reply_text}".strip() if reply_text and user_text else reply_text + user_text
+        reply_text = (
+            message.reply_to_message.text or message.reply_to_message.caption
+            if message.reply_to_message
+            else ""
+        )
+        user_text = (
+            message.text
+            if is_chatbot
+            else (
+                message.text.split(None, 1)[1] if len(message.text.split()) >= 2 else ""
+            )
+        )
+        return (
+            f"{user_text}\n\n{reply_text}".strip()
+            if reply_text and user_text
+            else reply_text + user_text
+        )
 
     async def kirim_file(self, message, output):
         if len(output) <= 4000:
