@@ -3,37 +3,45 @@ name: Format Code
 on:
   push:
     paths:
-    - "**.py"
+      - "**.py"
   workflow_dispatch:
 
 jobs:
   Format_Code:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
       - name: Setup Python Environment
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10.x"
+          python-version: "3.10"
+
       - name: Install Formatting Tools
-        run: pip install autopep8 autoflake isort black
-      - name: Run autopep8 Formatter
-        run: |
-          autopep8 --verbose --in-place --recursive --aggressive *.py
-      - name: Clean Imports
-        run: |
-          isort .
-          autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports .
+        run: pip install autopep8 autoflake isort black flake8
+
       - name: Apply Code Formatting
         run: |
           black .
           isort .
+          autopep8 --verbose --in-place --recursive --max-line-length 88 --ignore E501 .
+
+      - name: Clean Imports
+        run: |
+          isort .
+          autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports .
+
+      - name: Check Formatting Issues (Optional)
+        run: |
+          flake8 --ignore=E501
+
       - name: Auto Commit Changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-            commit_message: "Auto-format code"
-            commit_options: "--no-verify"
-            repository: .
-            commit_user_name: "ErNewDev0"
-            commit_user_email: "172886759+github-actions[bot]@users.noreply.github.com"
-            commit_author: "ErNewDev0 <172886759+github-actions[bot]@users.noreply.github.com>"
+          commit_message: "Auto-format code"
+          commit_options: "--no-verify"
+          repository: .
+          commit_user_name: "ErNewDev0"
+          commit_user_email: "172886759+github-actions[bot]@users.noreply.github.com"
+          commit_author: "ErNewDev0 <172886759+github-actions[bot]@users.noreply.github.com>"
