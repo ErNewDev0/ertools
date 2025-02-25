@@ -3,7 +3,8 @@ import string
 
 import gtts
 from gpytranslate import SyncTranslator
-# Kelas translate 
+# Kelas translate
+# contact
 
 class Translate(SyncTranslator):
     def ConvertLang(self, msg, lang="id"):
