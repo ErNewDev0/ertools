@@ -67,7 +67,7 @@ class Api:
             model = self.configure_model("chatbot")
             history = chat_history.setdefault(message.from_user.id, [])
             history.append({"role": "user", "parts": msg})
-# ya
+            # ya
             chat_session = model.start_chat(history=history)
             response = chat_session.send_message({"role": "user", "parts": msg}, safety_settings=self.safety_rate)
             history.append({"role": "model", "parts": response.text})
