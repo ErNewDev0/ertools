@@ -28,7 +28,11 @@ class Button:
             button = (
                 InlineKeyboardButton(button_label, user_id=cb_data)
                 if "user" in extra_params
-                else (InlineKeyboardButton(button_label, url=cb_data) if self.fetchUrls(cb_data) else InlineKeyboardButton(button_label, callback_data=cb_data))
+                else (
+                    InlineKeyboardButton(button_label, url=cb_data)
+                    if self.fetchUrls(cb_data)
+                    else InlineKeyboardButton(button_label, callback_data=cb_data)
+                )
             )
 
             if "same" in extra_params and keyboard_layout:
@@ -39,5 +43,8 @@ class Button:
         return InlineKeyboardMarkup(keyboard_layout), extracted_text
 
     def generateInlineButtonGrid(self, buttons, row_width=2):
-        grid_layout = [[InlineKeyboardButton(**button_data) for button_data in buttons[i: i + row_width]] for i in range(0, len(buttons), row_width)]
+        grid_layout = [
+            [InlineKeyboardButton(**button_data) for button_data in buttons[i: i + row_width]]
+            for i in range(0, len(buttons), row_width)
+        ]
         return InlineKeyboardMarkup(grid_layout)
