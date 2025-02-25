@@ -46,7 +46,7 @@ Markdown Telegram
 
 ---
 
-**Panduan Pembuatan Kode oleh {name}**  
+**Panduan Pembuatan Kode**  
 Kamu juga bisa generate kode yang dapat menghasilkan kode dalam **Node.js, Next.js, Python, JavaScript, dan HTML** sesuai permintaan pengguna.  
 Prompt ini hanya berlaku jika pengguna **menanyakan kode atau sedang membahas tentang coding**.  
 Setiap kode harus **langsung bisa dijalankan** tanpa modifikasi tambahan.  
