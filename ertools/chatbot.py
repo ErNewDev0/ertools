@@ -3,6 +3,7 @@ import os
 import random
 import re
 import string
+import traceback
 
 import aiofiles
 import aiohttp
@@ -59,32 +60,24 @@ class Api:
                 meta_description = soup.find("meta", attrs={"name": "description"})
                 description = meta_description["content"] if meta_description else "Tidak ada deskripsi"
 
-                url_response = (
-                    f"URL yang dikirim oleh {mention}:\n"
-                    f"**Judul**: {title}\n"
-                    f"**Deskripsi**: {description}\n"
-                    f"**Link**: {url}"
-                )
+                url_response = f"URL yang dikirim oleh {mention}:\n" f"**Judul**: {title}\n" f"**Deskripsi**: {description}\n" f"**Link**: {url}"
                 return url_response
             text = Handler().getMsg(message, is_chatbot=True)
-            msg = (
-                f"gue {mention}, Tolong Jawabnya Panggil nama gw, yaitu {mention},{text}"
-                if message.from_user.id not in chat_history
-                else text
-            )
+            msg = f"gue {mention}, Tolong Jawabnya Panggil nama gw, yaitu {mention},{text}" if message.from_user.id not in chat_history else text
 
             model = self.configure_model("chatbot")
             history = chat_history.setdefault(message.from_user.id, [])
             history.append({"role": "user", "parts": msg})
-            # ya
+# ya
             chat_session = model.start_chat(history=history)
             response = chat_session.send_message({"role": "user", "parts": msg}, safety_settings=self.safety_rate)
             history.append({"role": "model", "parts": response.text})
 
             return response.text
         except Exception as e:
-            self._log(__name__).error(f"ChatBot error: {str(e)}")
-            return f"Terjadi kesalahan: {str(e)}"
+            error_detail = traceback.format_exc()  # Ambil full traceback
+            self._log(__name__).error(f"ChatBot error:\n{error_detail}")  # Log full error
+            return f"Terjadi kesalahan:\n{error_detail}"  # Kirim error ke output
 
     def clear_chat_history(self, message):
         if chat_history.pop(message.from_user.id, None):
