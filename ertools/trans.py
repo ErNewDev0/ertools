@@ -3,7 +3,9 @@ import string
 
 import gtts
 from gpytranslate import SyncTranslator
-
+########
+Kelas translate 
+########
 
 class Translate(SyncTranslator):
     def ConvertLang(self, msg, lang="id"):
