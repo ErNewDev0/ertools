@@ -74,7 +74,7 @@ class Api:
             history.append({"role": "model", "parts": response.text})
 
             return response.text
-        except Exception as e:
+        except Exception:
             error_detail = traceback.format_exc()  # Ambil full traceback
             self._log(__name__).error(f"ChatBot error:\n{error_detail}")  # Log full error
             return f"Terjadi kesalahan:\n{error_detail}"  # Kirim error ke output
