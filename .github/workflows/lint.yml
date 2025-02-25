@@ -23,9 +23,9 @@ jobs:
 
       - name: Apply Code Formatting
         run: |
-          black --line-length 160 --fast --safe .
+          black --line-length 120 --fast --safe .
           isort .
-          autopep8 --in-place --aggressive --aggressive -r --max-line-length 160 ertools/
+          autopep8 --in-place --aggressive --aggressive -r --max-line-length 120 ertools/
 
       - name: Clean Unused Imports
         run: |
@@ -33,7 +33,7 @@ jobs:
           autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports .
 
       - name: Check Formatting Issues (Optional)
-        run: flake8 --max-line-length 160 --ignore=E501,F401,W503,W291
+        run: flake8 --max-line-length 120 --ignore=E501,F401,W503,W291
 
       - name: Auto Commit Changes
         uses: stefanzweifel/git-auto-commit-action@v4
