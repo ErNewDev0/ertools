@@ -59,7 +59,7 @@ class BinaryEncryptor:
         return "".join(format(ord(char), "08b") for char in text)
 
     def binary_to_text(self, binary):
-        chars = [binary[i : i + 8] for i in range(0, len(binary), 8)]
+        chars = [binary[i: i + 8] for i in range(0, len(binary), 8)]
         return "".join(chr(int(char, 2)) for char in chars)
 
     def encrypt(self, text):

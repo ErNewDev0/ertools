@@ -17,9 +17,7 @@ def read_requirements():
 def read(fname):
     """Reads a file and returns its content."""
     try:
-        with open(
-            os.path.join(os.path.dirname(__file__), fname), encoding="utf-8"
-        ) as f:
+        with open(os.path.join(os.path.dirname(__file__), fname), encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return ""

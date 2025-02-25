@@ -34,18 +34,14 @@ class LoggerHandler:
     Kelas untuk mengatur logger dengan warna dan opsi level logging.
     """
 
-    def __init__(
-        self, format_str: str = "%(asctime)s: [%(levelname)s] - %(name)s - %(message)s"
-    ):
+    def __init__(self, format_str: str = "%(asctime)s: [%(levelname)s] - %(name)s - %(message)s"):
         self.formatter = ColorfulFormatter(format_str)
 
     def setup_logger(self, error_logging: bool = False, log_level=logging.INFO):
         """
         Menyiapkan logger dengan handler dan formatter berwarna.
         """
-        logging.basicConfig(
-            level=log_level, handlers=[logging.StreamHandler(sys.stdout)]
-        )
+        logging.basicConfig(level=log_level, handlers=[logging.StreamHandler(sys.stdout)])
         for handler in logging.getLogger().handlers:
             handler.setFormatter(self.formatter)
 
