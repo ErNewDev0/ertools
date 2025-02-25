@@ -25,16 +25,15 @@ jobs:
         run: |
           black .
           isort .
-          autopep8 --verbose --in-place --recursive --max-line-length 88 --ignore E501 .
+          autopep8 --in-place --aggressive --aggressive -r ertools/
 
       - name: Clean Imports
         run: |
-          isort .
           autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports .
 
-      - name: Check Formatting Issues (Optional)
+      - name: Check Formatting Issues
         run: |
-          flake8 --ignore=E501
+          flake8 --ignore=F401,W503,W291 ertools/
 
       - name: Auto Commit Changes
         uses: stefanzweifel/git-auto-commit-action@v4
