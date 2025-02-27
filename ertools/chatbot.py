@@ -19,30 +19,39 @@ from .prompt import intruction
 
 chat_history = {}
 
-
 class Api:
     def __init__(self, name: str, dev: str, apikey: str, db_url: str):
         self.name = name
         self.dev = dev
         self.apikey = apikey
         self.db_url = db_url  # User harus isi ini dengan URL PostgreSQL
+        self.safety_rate = {key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]}
 
         # Koneksi ke PostgreSQL
-        self.conn = psycopg2.connect(db_url)
-        self.cursor = self.conn.cursor()
+        try:
+            self.conn = psycopg2.connect(db_url)
+            self.cursor = self.conn.cursor()
 
-        # Buat tabel jika belum ada
-        self.cursor.execute(
-            """
-        CREATE TABLE IF NOT EXISTS chat_history (
-            chat_id BIGINT,
-            role TEXT,
-            parts TEXT
-        );
-        """
-        )
-        self.conn.commit()
-        self.safety_rate = {key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]}
+            # Buat tabel jika belum ada
+            self.cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS chat_history (
+                    id SERIAL PRIMARY KEY,
+                    chat_id BIGINT NOT NULL,
+                    role TEXT NOT NULL,
+                    parts TEXT NOT NULL
+                );
+                """
+            )
+            self.conn.commit()
+        except Exception as e:
+            print(f"❌ Database connection error: {e}")
+
+    def close_connection(self):
+        """Tutup koneksi database saat bot mati"""
+        if hasattr(self, "conn"):
+            self.cursor.close()
+            self.conn.close()
 
     def configure_model(self, mode):
         genai.configure(api_key=self.apikey)
