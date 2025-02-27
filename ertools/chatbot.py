@@ -4,12 +4,10 @@ import random
 import re
 import string
 import traceback
-from urllib.parse import urlparse
 
 import aiofiles
 import aiohttp
 import google.generativeai as genai
-import pg8000
 import requests
 from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
@@ -22,49 +20,11 @@ chat_history = {}
 
 
 class Api:
-    def __init__(self, name: str, dev: str, apikey: str, db_url: str):
+    def __init__(self, name: str, dev: str, apikey: str):
         self.name = name
         self.dev = dev
         self.apikey = apikey
-        self.db_url = db_url  # Harus diisi dengan URL PostgreSQL
         self.safety_rate = {key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]}
-
-        # Parsing db_url menjadi host, user, password, dbname, port
-        self.db_params = self.parse_db_url(db_url)
-
-        # Koneksi ke PostgreSQL
-        try:
-            self.conn = pg8000.connect(**self.db_params)
-
-            # Buat tabel jika belum ada
-            self.conn.run(
-                """
-                CREATE TABLE IF NOT EXISTS chat_history (
-                    id SERIAL PRIMARY KEY,
-                    chat_id BIGINT NOT NULL,
-                    role TEXT NOT NULL,
-                    parts TEXT NOT NULL
-                );
-                """
-            )
-        except Exception as e:
-            print(f"❌ Database connection error: {e}")
-
-    def parse_db_url(self, db_url):
-        parsed = urlparse(db_url)
-        return {
-            "host": parsed.hostname,
-            "port": parsed.port or 5432,
-            "user": parsed.username,
-            "password": parsed.password,
-            "database": parsed.path.lstrip("/"),
-            "ssl_context": True,
-        }
-
-    def close_connection(self):
-        """Tutup koneksi database saat bot mati"""
-        if hasattr(self, "conn"):
-            self.conn.close()
 
     def configure_model(self, mode):
         genai.configure(api_key=self.apikey)
@@ -73,27 +33,6 @@ class Api:
 
     def _log(self, record):
         return logging.getLogger(record)
-
-    def get_chat_history(self, chat_id):
-        """Ambil history chat dari database"""
-        try:
-            result = self.conn.run(
-                "SELECT role, parts FROM chat_history WHERE chat_id = %s ORDER BY id ASC;", (chat_id,)
-            )
-            return [{"role": row[0], "parts": row[1]} for row in result]
-        except Exception as e:
-            self._log(__name__).error(f"Error get_chat_history: {e}")
-            return []
-
-    def save_chat_history(self, chat_id, role, parts):
-        """Simpan chat ke database"""
-        try:
-            self.conn.run(
-                "INSERT INTO chat_history (chat_id, role, parts) VALUES (%s, %s, %s);",
-                (chat_id, role, parts),
-            )
-        except Exception as e:
-            self._log(__name__).error(f"Error save_chat_history: {e}")
 
     def KhodamCheck(self, input):
         try:
@@ -109,59 +48,49 @@ class Api:
             mention = Extract().getMention(message.from_user)
             url_pattern = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
             urls = url_pattern.findall(message.text)
-
+    
             if urls:
                 url = urls[0]
                 response = requests.get(url, timeout=10)
                 if response.status_code != 200:
                     return f"URL tidak dapat diakses ({response.status_code})."
-
+    
                 soup = BeautifulSoup(response.content, "html.parser")
                 title = soup.title.string if soup.title else "Tidak ada judul"
                 meta_description = soup.find("meta", attrs={"name": "description"})
                 description = meta_description["content"] if meta_description else "Tidak ada deskripsi"
-
+    
                 return (
                     f"URL yang dikirim oleh {mention}:\n"
                     f"**Judul**: {title}\n"
                     f"**Deskripsi**: {description}\n"
                     f"**Link**: {url}"
                 )
-
+    
             text = Handler().getMsg(message, is_chatbot=True)
-            msg = f"Halo gue {mention}:\n{text}"
-
+            msg = f"gue {mention}, {text}"
+    
             model = self.configure_model("chatbot")
-            history = self.get_chat_history(message.chat.id)  # Ambil history dari PostgreSQL
-
+            chat_id = message.chat.id
+            history = chat_history.setdefault(chat_id, [])
+    
+            history.append({"role": "user", "parts": msg})
+    
             chat_session = model.start_chat(history=history)
             response = chat_session.send_message({"role": "user", "parts": msg}, safety_settings=self.safety_rate)
-
-            if response and response.text:
-                self.save_chat_history(message.chat.id, "user", msg)
-                self.save_chat_history(message.chat.id, "model", response.text)
-
-                # Hapus history lama jika lebih dari 20 pesan
-                self.conn.run(
-                    """
-                    DELETE FROM chat_history WHERE chat_id = %s
-                    AND id NOT IN (SELECT id FROM chat_history WHERE chat_id = %s ORDER BY id DESC LIMIT 20);
-                    """,
-                    (message.chat.id, message.chat.id),
-                )
-
-                return response.text
-            else:
-                return "Maaf, aku tidak bisa menjawab saat ini."
+    
+            history.append({"role": "model", "parts": response.text})  # Tambahkan response ke history grup
+    
+            return response.text
         except Exception:
             error_detail = traceback.format_exc()
             self._log(__name__).error(f"ChatBot error:\n{error_detail}")
             return f"Terjadi kesalahan:\n{error_detail}"
 
     def clear_chat_history(self, message):
-        if chat_history.pop(message.from_user.id, None):
+        if chat_history.pop(message.chat.id, None):
             mention = Extract().getMention(message.from_user)
-            return f"Riwayat obrolan untuk {mention} telah dihapus."
+            return f"Riwayat obrolan untuk {m.chat.title} telah dihapus."
         return "Maaf, kamu siapa"
 
 
