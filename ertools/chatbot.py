@@ -6,19 +6,18 @@ import string
 import traceback
 
 import aiofiles
-import psycopg2
 import aiohttp
 import google.generativeai as genai
+import psycopg2
 import requests
 from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
 
 from .getuser import Extract
-from .misc import Handler, save_chat_history, get_chat_history
+from .misc import Handler
 from .prompt import intruction
 
 chat_history = {}
-
 
 
 class Api:
@@ -33,13 +32,15 @@ class Api:
         self.cursor = self.conn.cursor()
 
         # Buat tabel jika belum ada
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS chat_history (
             chat_id BIGINT,
             role TEXT,
             parts TEXT
         );
-        """)
+        """
+        )
         self.conn.commit()
         self.safety_rate = {key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]}
 
@@ -65,45 +66,48 @@ class Api:
             mention = Extract().getMention(message.from_user)
             url_pattern = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
             urls = url_pattern.findall(message.text)
-    
+
             if urls:
                 url = urls[0]
                 response = requests.get(url, timeout=10)
                 if response.status_code != 200:
                     return f"URL tidak dapat diakses ({response.status_code})."
-    
+
                 soup = BeautifulSoup(response.content, "html.parser")
                 title = soup.title.string if soup.title else "Tidak ada judul"
                 meta_description = soup.find("meta", attrs={"name": "description"})
                 description = meta_description["content"] if meta_description else "Tidak ada deskripsi"
-    
+
                 return (
                     f"URL yang dikirim oleh {mention}:\n"
                     f"**Judul**: {title}\n"
                     f"**Deskripsi**: {description}\n"
                     f"**Link**: {url}"
                 )
-    
+
             text = Handler().getMsg(message, is_chatbot=True)
             msg = f"Halo gue {mention}:\n{text}"
-    
+
             model = self.configure_model("chatbot")
             history = self.get_chat_history(message.chat.id)  # Ambil history dari PostgreSQL
-    
+
             chat_session = model.start_chat(history=history)
             response = chat_session.send_message({"role": "user", "parts": msg}, safety_settings=self.safety_rate)
-    
+
             if response and response.text:
                 self.save_chat_history(message.chat.id, "user", msg)
                 self.save_chat_history(message.chat.id, "model", response.text)
-    
+
                 # Hapus history lama jika lebih dari 20 pesan
-                self.cursor.execute("""
+                self.cursor.execute(
+                    """
                     DELETE FROM chat_history WHERE chat_id = %s
                     AND id NOT IN (SELECT id FROM chat_history WHERE chat_id = %s ORDER BY id DESC LIMIT 20);
-                """, (message.chat.id, message.chat.id))
+                """,
+                    (message.chat.id, message.chat.id),
+                )
                 self.conn.commit()
-    
+
                 return response.text
             else:
                 return "Maaf, aku tidak bisa menjawab saat ini."
