@@ -8,7 +8,7 @@ import traceback
 import aiofiles
 import aiohttp
 import google.generativeai as genai
-import psycopg2
+import pg8000
 import requests
 from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
@@ -19,18 +19,20 @@ from .prompt import intruction
 
 chat_history = {}
 
-
 class Api:
     def __init__(self, name: str, dev: str, apikey: str, db_url: str):
         self.name = name
         self.dev = dev
         self.apikey = apikey
-        self.db_url = db_url  # User harus isi ini dengan URL PostgreSQL
+        self.db_url = db_url  # User harus isi dengan URL PostgreSQL
         self.safety_rate = {key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]}
+
+        # Parsing db_url menjadi host, user, password, dbname, port
+        self.db_params = self.parse_db_url(db_url)
 
         # Koneksi ke PostgreSQL
         try:
-            self.conn = psycopg2.connect(db_url)
+            self.conn = pg8000.connect(**self.db_params)
             self.cursor = self.conn.cursor()
 
             # Buat tabel jika belum ada
@@ -48,6 +50,17 @@ class Api:
         except Exception as e:
             print(f"❌ Database connection error: {e}")
 
+    def parse_db_url(self, db_url):
+        """Mengubah DATABASE_URL menjadi format yang bisa diterima pg8000"""
+        parsed = urlparse(db_url)
+        return {
+            "host": parsed.hostname,
+            "port": parsed.port or 5432,
+            "user": parsed.username,
+            "password": parsed.password,
+            "database": parsed.path.lstrip("/")
+        }
+
     def close_connection(self):
         """Tutup koneksi database saat bot mati"""
         if hasattr(self, "conn"):
@@ -61,6 +74,28 @@ class Api:
 
     def _log(self, record):
         return logging.getLogger(record)
+
+    def get_chat_history(self, chat_id):
+        """Ambil history chat dari database"""
+        try:
+            self.cursor.execute(
+                "SELECT role, parts FROM chat_history WHERE chat_id = ? ORDER BY id ASC;", (chat_id,)
+            )
+            return [{"role": row[0], "parts": row[1]} for row in self.cursor.fetchall()]
+        except Exception as e:
+            self._log(__name__).error(f"Error get_chat_history: {e}")
+            return []
+
+    def save_chat_history(self, chat_id, role, parts):
+        """Simpan chat ke database"""
+        try:
+            self.cursor.execute(
+                "INSERT INTO chat_history (chat_id, role, parts) VALUES (?, ?, ?);",
+                (chat_id, role, parts),
+            )
+            self.conn.commit()
+        except Exception as e:
+            self._log(__name__).error(f"Error save_chat_history: {e}")
 
     def KhodamCheck(self, input):
         try:
@@ -111,9 +146,9 @@ class Api:
                 # Hapus history lama jika lebih dari 20 pesan
                 self.cursor.execute(
                     """
-                    DELETE FROM chat_history WHERE chat_id = %s
-                    AND id NOT IN (SELECT id FROM chat_history WHERE chat_id = %s ORDER BY id DESC LIMIT 20);
-                """,
+                    DELETE FROM chat_history WHERE chat_id = ?
+                    AND id NOT IN (SELECT id FROM chat_history WHERE chat_id = ? ORDER BY id DESC LIMIT 20);
+                    """,
                     (message.chat.id, message.chat.id),
                 )
                 self.conn.commit()
