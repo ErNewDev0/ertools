@@ -6,6 +6,7 @@ import string
 import traceback
 
 import aiofiles
+import psycopg2
 import aiohttp
 import google.generativeai as genai
 import requests
@@ -13,17 +14,33 @@ from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
 
 from .getuser import Extract
-from .misc import Handler
+from .misc import Handler, save_chat_history, get_chat_history
 from .prompt import intruction
 
 chat_history = {}
 
 
+
 class Api:
-    def __init__(self, name: str, dev: str, apikey: str):
+    def __init__(self, name: str, dev: str, apikey: str, db_url: str):
         self.name = name
         self.dev = dev
         self.apikey = apikey
+        self.db_url = db_url  # User harus isi ini dengan URL PostgreSQL
+
+        # Koneksi ke PostgreSQL
+        self.conn = psycopg2.connect(db_url)
+        self.cursor = self.conn.cursor()
+
+        # Buat tabel jika belum ada
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_history (
+            chat_id BIGINT,
+            role TEXT,
+            parts TEXT
+        );
+        """)
+        self.conn.commit()
         self.safety_rate = {key: "BLOCK_NONE" for key in ["HATE", "HARASSMENT", "SEX", "DANGER"]}
 
     def configure_model(self, mode):
@@ -48,45 +65,52 @@ class Api:
             mention = Extract().getMention(message.from_user)
             url_pattern = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
             urls = url_pattern.findall(message.text)
-
+    
             if urls:
                 url = urls[0]
                 response = requests.get(url, timeout=10)
                 if response.status_code != 200:
-                    return f"URL tidak dapat diakses {response.status_code})."
-
+                    return f"URL tidak dapat diakses ({response.status_code})."
+    
                 soup = BeautifulSoup(response.content, "html.parser")
                 title = soup.title.string if soup.title else "Tidak ada judul"
                 meta_description = soup.find("meta", attrs={"name": "description"})
                 description = meta_description["content"] if meta_description else "Tidak ada deskripsi"
-
-                url_response = (
+    
+                return (
                     f"URL yang dikirim oleh {mention}:\n"
                     f"**Judul**: {title}\n"
                     f"**Deskripsi**: {description}\n"
                     f"**Link**: {url}"
                 )
-                return url_response
+    
             text = Handler().getMsg(message, is_chatbot=True)
-            msg = (
-                f"gue {mention}, Tolong Jawabnya Panggil nama gw, yaitu {mention},{text}"
-                if message.from_user.id not in chat_history
-                else text
-            )
-
+            msg = f"Halo gue {mention}:\n{text}"
+    
             model = self.configure_model("chatbot")
-            history = chat_history.setdefault(message.from_user.id, [])
-            history.append({"role": "user", "parts": msg})
-            # ya
+            history = self.get_chat_history(message.chat.id)  # Ambil history dari PostgreSQL
+    
             chat_session = model.start_chat(history=history)
             response = chat_session.send_message({"role": "user", "parts": msg}, safety_settings=self.safety_rate)
-            history.append({"role": "model", "parts": response.text})
-
-            return response.text
+    
+            if response and response.text:
+                self.save_chat_history(message.chat.id, "user", msg)
+                self.save_chat_history(message.chat.id, "model", response.text)
+    
+                # Hapus history lama jika lebih dari 20 pesan
+                self.cursor.execute("""
+                    DELETE FROM chat_history WHERE chat_id = %s
+                    AND id NOT IN (SELECT id FROM chat_history WHERE chat_id = %s ORDER BY id DESC LIMIT 20);
+                """, (message.chat.id, message.chat.id))
+                self.conn.commit()
+    
+                return response.text
+            else:
+                return "Maaf, aku tidak bisa menjawab saat ini."
         except Exception:
-            error_detail = traceback.format_exc()  # Ambil full traceback
-            self._log(__name__).error(f"ChatBot error:\n{error_detail}")  # Log full error
-            return f"Terjadi kesalahan:\n{error_detail}"  # Kirim error ke output
+            error_detail = traceback.format_exc()
+            self._log(__name__).error(f"ChatBot error:\n{error_detail}")
+            return f"Terjadi kesalahan:\n{error_detail}"
 
     def clear_chat_history(self, message):
         if chat_history.pop(message.from_user.id, None):
