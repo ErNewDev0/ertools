@@ -58,7 +58,7 @@ class Api:
             "user": parsed.username,
             "password": parsed.password,
             "database": parsed.path.lstrip("/"),
-            "ssl_context": True
+            "ssl_context": True,
         }
 
     def close_connection(self):
