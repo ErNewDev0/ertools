@@ -6,5 +6,4 @@ google-generativeai
 gtts
 aiofiles
 aiohttp
-pg8000
 beautifulsoup4
