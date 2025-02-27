@@ -51,7 +51,6 @@ class Api:
             print(f"❌ Database connection error: {e}")
 
     def parse_db_url(self, db_url):
-        """Mengubah DATABASE_URL menjadi format yang bisa diterima pg8000"""
         parsed = urlparse(db_url)
         return {
             "host": parsed.hostname,
@@ -59,6 +58,7 @@ class Api:
             "user": parsed.username,
             "password": parsed.password,
             "database": parsed.path.lstrip("/"),
+            "ssl_context": True
         }
 
     def close_connection(self):
