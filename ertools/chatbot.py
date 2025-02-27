@@ -19,6 +19,7 @@ from .prompt import intruction
 
 chat_history = {}
 
+
 class Api:
     def __init__(self, name: str, dev: str, apikey: str, db_url: str):
         self.name = name
