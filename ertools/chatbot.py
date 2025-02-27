@@ -4,6 +4,7 @@ import random
 import re
 import string
 import traceback
+from urllib.parse import urlparse
 
 import aiofiles
 import aiohttp
@@ -12,13 +13,13 @@ import pg8000
 import requests
 from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
-from urllib.parse import urlparse
 
 from .getuser import Extract
 from .misc import Handler
 from .prompt import intruction
 
 chat_history = {}
+
 
 class Api:
     def __init__(self, name: str, dev: str, apikey: str, db_url: str):
@@ -59,7 +60,7 @@ class Api:
             "port": parsed.port or 5432,
             "user": parsed.username,
             "password": parsed.password,
-            "database": parsed.path.lstrip("/")
+            "database": parsed.path.lstrip("/"),
         }
 
     def close_connection(self):
@@ -79,9 +80,7 @@ class Api:
     def get_chat_history(self, chat_id):
         """Ambil history chat dari database"""
         try:
-            self.cursor.execute(
-                "SELECT role, parts FROM chat_history WHERE chat_id = ? ORDER BY id ASC;", (chat_id,)
-            )
+            self.cursor.execute("SELECT role, parts FROM chat_history WHERE chat_id = ? ORDER BY id ASC;", (chat_id,))
             return [{"role": row[0], "parts": row[1]} for row in self.cursor.fetchall()]
         except Exception as e:
             self._log(__name__).error(f"Error get_chat_history: {e}")
