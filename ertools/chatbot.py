@@ -12,6 +12,7 @@ import pg8000
 import requests
 from bs4 import BeautifulSoup
 from pyrogram.types import InputMediaPhoto
+from urllib.parse import urlparse
 
 from .getuser import Extract
 from .misc import Handler
