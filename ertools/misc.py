@@ -1,5 +1,12 @@
 from io import BytesIO
 
+def save_chat_history(self, chat_id, role, parts):
+    self.cursor.execute("INSERT INTO chat_history (chat_id, role, parts) VALUES (%s, %s, %s);", (chat_id, role, parts))
+    self.conn.commit()
+
+def get_chat_history(self, chat_id):
+    self.cursor.execute("SELECT role, parts FROM chat_history WHERE chat_id = %s ORDER BY id ASC;", (chat_id,))
+    return [{"role": row[0], "parts": row[1]} for row in self.cursor.fetchall()]
 
 class Handler:
     def getArg(self, message):
