@@ -6,4 +6,5 @@ google-generativeai
 gtts
 aiofiles
 aiohttp
+psycopg2
 beautifulsoup4
