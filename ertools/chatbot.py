@@ -18,7 +18,6 @@ from .prompt import intruction
 
 chat_history = {}
 
-
 class Api:
     def __init__(self, name: str, dev: str, apikey: str):
         self.name = name
@@ -84,8 +83,7 @@ class Api:
             return response.text
         except Exception:
             error_detail = traceback.format_exc()
-            self._log(__name__).error(f"ChatBot error:\n{error_detail}")
-            return f"Terjadi kesalahan:\n{error_detail}"
+            return self._log(__name__).error(f"ChatBot error:\n{error_detail}")
 
     def clear_chat_history(self, message):
         if chat_history.pop(message.chat.id, None):
