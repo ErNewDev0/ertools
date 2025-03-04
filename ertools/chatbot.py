@@ -70,7 +70,7 @@ class Api:
             msg = f"gue {mention}, {text}"
     
             model = self.configure_model("chatbot")
-            chat_id = message.chat.id
+            chat_id = message.from_user.id
             history = chat_history.setdefault(chat_id, [])
     
             history.append({"role": "user", "parts": msg})
@@ -88,7 +88,7 @@ class Api:
     def clear_chat_history(self, message):
         if chat_history.pop(message.chat.id, None):
             mention = Extract().getMention(message.from_user)
-            return f"Riwayat obrolan untuk {m.chat.title} telah dihapus."
+            return f"Riwayat obrolan untuk {m.from_user.first_name} telah dihapus."
         return "Maaf, kamu siapa"
 
 
